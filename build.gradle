@@ -1,0 +1,67 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'io.github.a-mayur'
+version = '1.6.1-SNAPSHOT'
+
+def javacppVersion = '1.5.14'
+// install prefix of OpenFHE: -Popenfhe.home=... or OPENFHE_HOME
+def openfheHome = findProperty('openfhe.home') ?: System.getenv('OPENFHE_HOME') ?: '/usr/local'
+def openfheInclude = "$openfheHome/include/openfhe"
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    javacpp
+}
+
+dependencies {
+    api "org.bytedeco:javacpp:$javacppVersion"
+    javacpp "org.bytedeco:javacpp:$javacppVersion"
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+def classesDir = sourceSets.main.java.destinationDirectory
+
+// generates the JNI code, compiles it and copies libOPENFHE* next to it inside the classes dir
+tasks.register('javacppBuild', JavaExec) {
+    dependsOn tasks.compileJava
+    inputs.files(sourceSets.main.java.srcDirs, 'src/main/cpp')
+    outputs.dir(classesDir.dir('io/github/amayur/openfhe'))
+    classpath = configurations.javacpp
+    mainClass = 'org.bytedeco.javacpp.tools.Builder'
+    doFirst {
+        args '-cp', classesDir.get().asFile.path,
+             "-Dplatform.includepath=${file('src/main/cpp')}:$openfheInclude:$openfheInclude/core:$openfheInclude/pke:$openfheInclude/binfhe:$openfheInclude/cereal",
+             "-Dplatform.linkpath=$openfheHome/lib",
+             // must match OpenFHE_CXX_FLAGS of the installed OpenFHE
+             '-Xcompiler', '-fopenmp', '-Xcompiler', '-DMATHBACKEND=4', '-Xcompiler', '-Wno-deprecated-declarations',
+             '-copylibs',
+             'io.github.amayur.openfhe.**'
+    }
+}
+
+tasks.named('classes') { dependsOn 'javacppBuild' }
+
+// BSD clause 2: binary redistributions of OpenFHE (bundled .so files) must carry its notice
+tasks.named('jar') {
+    metaInf { from 'LICENSE', 'THIRD-PARTY-NOTICES' }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // OpenFHE's key stores are process-wide and native memory isn't seen by the GC
+    forkEvery = 1
+    // JavaCPP caps RSS at 4x heap by default, BinFHE bootstrapping keys alone need ~5 GB of native memory
+    systemProperty 'org.bytedeco.javacpp.maxPhysicalBytes', '0'
+    testLogging { events 'failed'; exceptionFormat 'full' }
+}
