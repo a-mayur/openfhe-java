@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![Java Versions](https://img.shields.io/badge/java-11%2B-blue)](https://openjdk.org/)
 [![OpenFHE Version](https://img.shields.io/badge/OpenFHE-1.6.1-green)](https://github.com/openfheorg/openfhe-development)
-[![build](https://github.com/a-mayur/openfhe-java/actions/workflows/build.yml/badge.svg)](https://github.com/a-mayur/openfhe-java/actions/workflows/build.yml)
+[![build](https://github.com/a-mayur/openfhe-java/actions/workflows/main.yml/badge.svg)]([https://github.com/a-mayur/openfhe-java/actions/workflows/build.yml](https://github.com/a-mayur/openfhe-java/blob/main/.github/workflows/main.yml))
 
 Java wrapper for the main cryptographic capabilities of the OpenFHE C++ library. `OpenFHE-Java` gives
 Java developers access to BFV, BGV, CKKS and FHEW/TFHE through a Java API, while all FHE operations
