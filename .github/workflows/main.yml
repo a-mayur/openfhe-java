@@ -45,7 +45,8 @@ jobs:
           cmake --install "$RUNNER_TEMP/openfhe-build"
 
       - name: Build and test
-        run: ./gradlew -Popenfhe.home="$HOME/openfhe" build
+        # bash instead of ./gradlew: uploads through the GitHub web UI drop the executable bit
+        run: bash ./gradlew -Popenfhe.home="$HOME/openfhe" build
 
       - name: Upload test reports
         if: failure()
